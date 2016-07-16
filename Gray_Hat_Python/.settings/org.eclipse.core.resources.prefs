@@ -2,5 +2,6 @@ eclipse.preferences.version=1
 encoding//src/simpledebugger/version001/my_debugger.py=utf-8
 encoding//src/simpledebugger/version001/my_debugger_defines.py=utf-8
 encoding//src/simpledebugger/version001/my_test_attach_detach.py=utf-8
+encoding//src/simpledebugger/version001/my_test_debug_event.py=utf-8
 encoding//src/simpledebugger/version001/my_test_enum.py=utf-8
 encoding//src/simpledebugger/version001/my_test_load.py=utf-8
