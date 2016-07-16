@@ -22,6 +22,7 @@ class debugger(object):
         
         # breakpoint
         self.breakpoint = {}
+        self.first_breakpoint = True
         
     def load(self, path_to_exe):
         # dwCreation flag determines how to create the Process
@@ -155,11 +156,12 @@ class debugger(object):
             print 'In enumerate_thread, Error: ', kernel32.GetLastError()
             return False
         
-    def get_thread_context(self, thread_id):
+    def get_thread_context(self, thread_id=None, h_thread=None):
         context = CONTEXT()
         context.ContextFlags = CONTEXT_FULL | CONTEXT_DEBUG_REGISTERS
         # Obtain a handle to the thread
-        h_thread = self.open_thread(thread_id)
+        if h_thread is None:
+            h_thread = self.open_thread(thread_id)
         if kernel32.GetThreadContext( h_thread, byref(context)):
             kernel32.CloseHandle(h_thread)
             return context
@@ -179,8 +181,30 @@ class debugger(object):
     def exception_handler_breakpoint(self):
         print '[*] Inside the breakpoint handler'
         print 'Exception Address: 0x%08x' % self.exception_address
+        
+        # Check if the breakpoint is one that we set
+        if not self.breakpoint.has_key(self.exception_address):
+            # If it is the first Windows driven breakpoint
+            # then let's just continue on
+            if self.first_breakpoint == True:
+                self.first_breakpoint = False
+                print '[*] Hit the first breakpoint'
+        else:
+            print '[*] Hit user defined the breakpoints we set'
+            # this is where we handle the breakpoints we set
+            # first output the original_byte back
+            self.write_process_memory(self.exception_address,
+                                       self.breakpoint[self.exception_address])
+             
+            # Obtain a fresh context record, reset EIP back to the
+            # original_byte and then set the thread's context record
+            # with the new EIP value
+#             self.context = self.get_thread_context(h_thread=self.h_thread)
+            self.context.Eip = self.context.Eip - 1
+             
+            kernel32.SetThreadContext( self.h_thread, byref(self.context))
+            
         return DBG_CONTINUE
-    
             
     # process memory
     # read process memory

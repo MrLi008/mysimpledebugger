@@ -14,4 +14,9 @@ debugger.attach(int(pid))
 printf_address = debugger.func_resolve('msvcrt', 'printf')
 print '[*] Address of printf: 0x%08x' % printf_address
 debugger.bp_set_software(printf_address)
+
+strcpy_address = debugger.func_resolve('msvcrt', 'strcpy')
+print '[*] Address of strcpy: 0x%08x' % strcpy_address
+debugger.bp_set_software(strcpy_address)
+
 debugger.run()
