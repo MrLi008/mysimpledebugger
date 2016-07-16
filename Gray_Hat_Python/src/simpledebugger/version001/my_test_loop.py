@@ -17,6 +17,6 @@ debugger.bp_set_software(printf_address)
 
 strcpy_address = debugger.func_resolve('msvcrt', 'strcpy')
 print '[*] Address of strcpy: 0x%08x' % strcpy_address
-debugger.bp_set_software(strcpy_address)
+debugger.bp_set_hardware(strcpy_address, 1, my_debugger.HW_EXECUTE)
 
 debugger.run()
