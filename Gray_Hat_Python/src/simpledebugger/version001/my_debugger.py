@@ -25,6 +25,15 @@ class debugger(object):
         self.first_breakpoint = True
         self.hardware_breakpoint = {}
         
+        # Here let's determine and store
+        # the default page size for the system
+        system_info = SYSTEM_INFO()
+        kernel32.GetSystemInfo(byref(system_info))
+        self.page_size = system_info.dwPageSize
+        
+        self.guarded_pages = []
+        self.memory_breakpoints = {}
+        
     def load(self, path_to_exe):
         # dwCreation flag determines how to create the Process
         # set creation_flags = CREATE_NEW_CONSOLE if you want 
@@ -111,9 +120,9 @@ class debugger(object):
                 elif exception == EXCEPTION_BREAKPOINT:
                     continue_status = self.exception_handler_breakpoint()
                 elif exception == EXCEPTION_GUARD_PAGE:
-                    print 'Guard Page Access Detected'
+                    print 'Guard Page Access Detected, 0x%08x' % self.exception_address
                 elif exception == EXCEPTION_SINGLE_STEP:
-                    print 'single step'
+                    print 'single step, 0x%08x' % self.exception_address
                     self.exception_handler_single_step()
             
             kernel32.ContinueDebugEvent(debug_event.dwProcessId,
@@ -351,7 +360,7 @@ class debugger(object):
             
             # update the internal hardware breakpoint array at the used
             # slot index
-            self.hardware_breakpoint[available] = (address, length, condition)
+        self.hardware_breakpoint[available] = (address, length, condition)
         return True
     
     def bp_del_hardware(self, slot):
@@ -382,7 +391,45 @@ class debugger(object):
         # Remove the breakpoint from the internal list
         del self.hardware_breakpoint[slot]
         return True
-                             
+    
+    def bp_set_memory(self, address, size):
+        mbi = MEMORY_BASIC_INFORMATION()
+        # If our VirtualQueryEx() call doesn't return 
+        # a full-size MEMORY_BASIC_INFORMATION
+        # then return False
+        if kernel32.VirtualQueryEx(self.h_process, 
+                                   address, 
+                                   byref(mbi),
+                                   sizeof(mbi)) < sizeof(mbi):
+            print 'In bp set memory,virtual query ex, Error: ', kernel32.GetLastError()
+            return False
+        
+        current_page = mbi.BaseAddress
+        
+        # We will set the permissions on all pages that are
+        # affected by our memory breakpoint
+        while current_page <= address + size:
+            
+            # Add the page to the listm this will
+            # differentiate our guarded pages from those
+            # that were set by the OS or the debugger process
+            self.guarded_pages.append(current_page)
+            
+            old_protection = c_ulong(0)
+            if not kernel32.VirtualProtectEx(self.h_process,
+                                             current_page, 
+                                             size,
+                                             mbi.Protect | PAGE_GUARD,
+                                             byref(old_protection)):
+                print 'In bp set memory, virtual protect ex, Error ', kernel32.GetLastError()
+                return False
+            # Increase our range by the size of the 
+            # default system memory page size
+            current_page += self.page_size
+            
+        # Add the memory breakpoint to our global list
+        self.memory_breakpoints[address] = (address, size, mbi)
+        return True
             
             
             
