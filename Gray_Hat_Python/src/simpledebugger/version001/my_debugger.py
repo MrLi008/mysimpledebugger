@@ -64,7 +64,7 @@ class debugger(object):
         if kernel32.DebugActiveProcess(pid):
             self.debugger_active = True
             self.pid = int(pid)
-            self.run()
+#             self.run()
         else:
             print '[*] Unable to attach to the process.'
             print 'In attach, Error: ', kernel32.GetLastError()
@@ -96,6 +96,48 @@ class debugger(object):
             return False
             
             
+    
+    def open_thread(self, thread_id):
+        h_thread = kernel32.OpenThread(THREAD_ALL_ACCESS, None, thread_id)
+        if h_thread is not None:
+            return h_thread
+        else:
+            print '[*] Could not obtain a valid thread handle.'
+            print 'In open thread Error: ', kernel32.GetLastError()
+            return False
+        
+    def enumerate_thread(self):
+        thread_entry = THREADENTRY32()
+        thread_list = []
+        snapshot = kernel32.CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, self.pid)
+        if snapshot is not None:
+            # You have to set the size of the struct 
+            # or the call will fill
+            thread_entry.dwSize = sizeof( thread_entry)
+            success = kernel32.Thread32First(snapshot, byref(thread_entry))
+            while success:
+                if thread_entry.th32OwnerProcessID == self.pid:
+                    thread_list.append(thread_entry.th32ThreadID)
+                success = kernel32.Thread32Next(snapshot, byref(thread_entry))
+            kernel32.CloseHandle(snapshot)
+            return thread_list
+        else:
+            print 'In enumerate_thread, Error: ', kernel32.GetLastError()
+            return False
+        
+    def get_thread_context(self, thread_id):
+        context = CONTEXT()
+        context.ContextFlags = CONTEXT_FULL | CONTEXT_DEBUG_REGISTERS
+        # Obtain a handle to the thread
+        h_thread = self.open_thread(thread_id)
+        if kernel32.GetThreadContext( h_thread, byref(context)):
+            kernel32.CloseHandle(h_thread)
+            return context
+        else:
+            print 'In get thread context, Error: ', kernel32.GetLastError()
+            return False
+    
+    
             
             
             
