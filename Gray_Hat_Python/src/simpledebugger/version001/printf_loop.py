@@ -13,6 +13,8 @@ msvcrt= cdll.msvcrt
 counter = 0
 while 1:
     msvcrt.printf( 'loop itration, %d' % counter)
+    str1 = msvcrt.strcpy('a','b')
+    msvcrt.printf(str(str1)+'\n')
     time.sleep(1)
     counter = counter + 1
     if counter > 50:
