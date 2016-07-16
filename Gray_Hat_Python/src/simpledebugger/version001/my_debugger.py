@@ -23,6 +23,7 @@ class debugger(object):
         # breakpoint
         self.breakpoint = {}
         self.first_breakpoint = True
+        self.hardware_breakpoint = {}
         
     def load(self, path_to_exe):
         # dwCreation flag determines how to create the Process
@@ -272,7 +273,17 @@ class debugger(object):
                     return False
             
         return True
-    
+    def bp_set_hardware(self, address, length, condition):
+        # Check for a valid length value
+        if length not in (1, 2, 4):
+            return False
+        else:
+            length -= 1
+        
+        # Check for a valid condition
+        if condition not in (HW_ACCESS, HW_EXECUTE, HW_WRITE):
+            return False
+        
             
             
             
