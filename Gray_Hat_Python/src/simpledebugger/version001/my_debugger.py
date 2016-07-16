@@ -17,6 +17,11 @@ class debugger(object):
         self.debugger_active = None #调试器是否活动
         self.h_thread = None
         self.context = None
+        self.exception = None
+        self.exception_address = None
+        
+        # breakpoint
+        self.breakpoint = {}
         
     def load(self, path_to_exe):
         # dwCreation flag determines how to create the Process
@@ -60,7 +65,7 @@ class debugger(object):
         return h_process
             
     def attach(self, pid):
-        h_process = self.open_process(pid)
+        self.h_process = self.open_process(pid)
         # We attempt to attach to the process
         # if this fails we exit the call
         if kernel32.DebugActiveProcess(pid):
@@ -89,9 +94,24 @@ class debugger(object):
             # Let's obtain the thread and context information
             self.h_thread = self.open_thread(debug_event.dwThreadId)
             self.context = self.get_thread_context(debug_event.dwThreadId)
-            print 'event code',debug_event.dwDebugEventCode,\
-                ', Thread id ', debug_event.dwThreadId
+#             print 'event code',debug_event.dwDebugEventCode,\
+#                 ', Thread id ', debug_event.dwThreadId
             
+            # If the event code is an Exception, we want to 
+            # examine it futher
+            if debug_event.dwDebugEventCode == EXCEPTION_DEBUG_EVENT:
+                exception = debug_event.u.Exception.ExceptionRecord.ExceptionCode
+                self.exception_address = debug_event.u.Exception.ExceptionRecord.ExceptionAddress
+                if exception == EXCEPTION_ACCESS_VIOLATION:
+                    print 'Accesss violation detected'
+                # If a breakpoint is detected, we call an internal 
+                # handle
+                elif exception == EXCEPTION_BREAKPOINT:
+                    continue_status = self.exception_handler_breakpoint()
+                elif exception == EXCEPTION_GUARD_PAGE:
+                    print 'Guard Page Access Detected'
+                elif exception == EXCEPTION_SINGLE_STEP:
+                    print 'single step'
             
             kernel32.ContinueDebugEvent(debug_event.dwProcessId,
                                         debug_event.dwThreadId,
@@ -147,8 +167,88 @@ class debugger(object):
             print 'In get thread context, Error: ', kernel32.GetLastError()
             return False
     
+    # get function's address from dll
+    def func_resolve(self, dll, function):
+        handle = kernel32.GetModuleHandleA(dll)
+        address = kernel32.GetProcAddress(handle, function)
+        kernel32.CloseHandle(handle)
+        return address
+    
+    
+    # exception handler breakpoint
+    def exception_handler_breakpoint(self):
+        print '[*] Inside the breakpoint handler'
+        print 'Exception Address: 0x%08x' % self.exception_address
+        return DBG_CONTINUE
     
             
+    # process memory
+    # read process memory
+    def read_process_memory(self, address, length):
+        data = ''
+        read_buf = create_string_buffer(length)
+        count = c_ulong(0)
+        try:
+            if not kernel32.ReadProcessMemory(self.h_process,
+                                              address, 
+                                              read_buf,
+                                              length,
+                                              byref(count)):
+                print 'In read process memory, Error: ', kernel32.GetLastError()
+                return False
+            else:
+                data = read_buf.raw
+                return data
+        except Exception, e:
+            print 'In read process memory, Exception: ', e
+    
+    # write process memroy
+    def write_process_memory(self, address, data):
+        count = c_ulong(0)
+        length = len(data)
+        c_data = c_char_p(data[count.value:])
+        if not kernel32.WriteProcessMemory(self.h_process,
+                                           address,
+                                           c_data,
+                                           length,
+                                           byref(count)):
+            print 'In write process memory, Error: ', kernel32.GetLastError()
+            return False
+        else:
+            return True
+    
+    
+    # set break point 
+    # set software point
+    def bp_set_software(self, address):
+        if not self.breakpoint.has_key(address):
+            try: 
+                
+                old_protect = c_ulong(0)
+                kernel32.VirtualProtectEx(self.h_process,
+                                          address, 
+                                          1, 
+                                          PAGE_EXECUTE_READWRITE, 
+                                          byref(old_protect))
+                
+                print 'virtual protect ex'
+                # store the original byte
+                original_byte = self.read_process_memory(address, 1)
+                
+                print 'read process memory,', original_byte
+                # write the INT3 opcode
+                self.write_process_memory(address, '\xCC')
+                
+                print 'write process memory'
+                
+                # register the breakpoint in our internal list
+                self.breakpoint[address] = (original_byte)
+            except Exception,e:
+                    print 'Here, bp set software, Exception: ', e
+                    return False
+            
+        return True
+    
             
             
             
