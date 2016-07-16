@@ -15,6 +15,7 @@ while 1:
     msvcrt.printf( 'loop itration, %d' % counter)
     str1 = msvcrt.strcpy('a','b')
     msvcrt.printf(str(str1)+'\n')
+    print 'len', msvcrt.strlen(str(str1))
     time.sleep(1)
     counter = counter + 1
     if counter > 50:
