@@ -18,30 +18,37 @@ import random
 
 # This is our user defined callback function
 def printf_randomizer(dbg):
-    
+    print 'printf randomizer'
     # Read in the value of the counter at ESP + 0x8 as a DWORD
     parameter_addr = dbg.context.Esp + 0x8
+#     r = 20
+#     for num in range(r):
+#         parameter_addr = dbg.context.Esp + num - r/2
+    #     parameter_addr = dbg.context.SegSs + 0x8
     counter = dbg.read_process_memory(parameter_addr, 4)
-#     print 'kernel32.getlasterror(): ', kernel32.GetLastError()
+    #     print 'kernel32.getlasterror(): ', kernel32.GetLastError()
+        
+        # When we user read_process_memory, it returns a packed binary
+        # string. We must first unpack it before we can use it further.
+#         print 'old tuple', struct.unpack("L", counter),
+    counter = struct.unpack("L", counter)[0]
+#         print 'old Counter: %d' % int(counter)
+#         if counter < 20 and counter > 10:
+    print '(%d,0x%08x' %(counter,parameter_addr)
     
-    # When we user read_process_memory, it returns a packed binary
-    # string. We must first unpack it before we can use it further.
-    print 'old tuple', struct.unpack('L', counter),
-    counter = struct.unpack('L', counter)[0]
-    print 'old Counter: %d' % int(counter)
-
+#     return DBG_EXCEPTION_NOT_HANDLED
     # Generate a random number and pack it into binary format
     # so that it is written correctly back into the process
     random_counter = random.randint(1,50)
     print 'new Counter: %d' % int(random_counter)
-    random_counter = struct.pack('L', random_counter)[0]
-    
-    
-
+    random_counter = struct.pack("L", random_counter)[0]
+     
+     
+ 
     # Now swap in our random number and resume the process
     dbg.write_process_memory(parameter_addr, random_counter)
 #     print 'kernel32.getlasterror(): ', kernel32.GetLastError()
-    
+     
     return DBG_CONTINUE
 
 # Instantiate the pydbg class
@@ -54,7 +61,9 @@ print 'attach: ', dbg.attach(int(pid))
 # defined as a callback
 printf_address = dbg.func_resolve('msvcrt', 'printf')
 
-print 'bp set', dbg.bp_set(printf_address, description='printf_address', handler=printf_randomizer)
+print 'bp set', dbg.bp_set(printf_address,
+                        description='printf_address',
+                        handler=printf_randomizer)
 
 # Resume the process
 dbg.run()

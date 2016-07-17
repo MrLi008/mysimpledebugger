@@ -12,7 +12,7 @@ import time
 msvcrt= cdll.msvcrt
 counter = 0
 while 1:
-    msvcrt.printf( 'loop itration, %d\n' % counter)
+    msvcrt.printf( 'loop itration, %d\t' % counter)
 #     str1 = msvcrt.strcpy('a','b')
 #     msvcrt.printf(str(str1)+'\n')
 #     print 'len', msvcrt.strlen(str(str1))

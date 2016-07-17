@@ -73,7 +73,7 @@ class debugger(object):
             # and store it for future access
             self.h_process = self.open_process(process_information.dwProcessId)
         else:
-            print '[*] Error: 0x%09x.' % kernel32.GetLastError()
+            print '[*] Error: 0x%08x.' % kernel32.GetLastError()
             
     def open_process(self, pid):
         h_process = kernel32.OpenProcess(PROCESS_ALL_ACCESS, False, pid)
