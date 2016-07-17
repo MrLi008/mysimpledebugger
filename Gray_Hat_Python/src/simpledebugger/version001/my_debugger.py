@@ -21,8 +21,11 @@ class debugger(object):
         self.exception_address = None
         
         # breakpoint
+        # software breakpoint
         self.breakpoint = {}
         self.first_breakpoint = True
+        
+        # hardware breakpoint
         self.hardware_breakpoint = {}
         
         # Here let's determine and store
@@ -32,6 +35,7 @@ class debugger(object):
         self.page_size = system_info.dwPageSize
         
         self.guarded_pages = []
+        # memory breakpoint
         self.memory_breakpoints = {}
         
     def load(self, path_to_exe):
