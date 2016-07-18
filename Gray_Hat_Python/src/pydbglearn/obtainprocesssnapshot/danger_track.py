@@ -40,7 +40,7 @@ dangerous_functions = {
 
 dangerous_functions_resolved = {}
 
-crach_encountered = False
+crash_encountered = False
 
 instruction_count = 0
 
@@ -55,7 +55,7 @@ def danger_handler(dbg):
     print '[*] Hit %s' % dangerous_functions_resolved[dbg.context.Eip]
     print "=========="
     while esp_offset <= 20:
-        parameter = dbg.smart_dereference(dbg.context.Exp+esp_offset)
+        parameter = dbg.smart_dereference(dbg.context.Esp+esp_offset)
         print '[ESP +%d] => %s'%(esp_offset, parameter)
         esp_offset+=4
     print '=============\n'
@@ -126,10 +126,10 @@ dbg = pydbg()
 
 pid = raw_input('Enter the PID you wish to monitor: ')
 
-dbg.attach(pid)
+dbg.attach(int(pid))
 
 # Track down all of the dangerous functions and set breakpoints
-for func in dangerous_functions.key():
+for func in dangerous_functions.keys():
     func_address = dbg.func_resolve(dangerous_functions[func],func)
     print '[*] Resolved breakpoint:%s->0x%080x'%(func, func_address)
     
