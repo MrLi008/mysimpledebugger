@@ -1,7 +1,7 @@
 eclipse.preferences.version=1
-encoding//src/pydbglearn/my_test_struct.py=utf-8
-encoding//src/pydbglearn/printf_loop.py=utf-8
-encoding//src/pydbglearn/printf_random.py=utf-8
+encoding//src/pydbglearn/printf_random/my_test_struct.py=utf-8
+encoding//src/pydbglearn/printf_random/printf_loop.py=utf-8
+encoding//src/pydbglearn/printf_random/printf_random.py=utf-8
 encoding//src/simpledebugger/version001/my_debugger.py=utf-8
 encoding//src/simpledebugger/version001/my_debugger_defines.py=utf-8
 encoding//src/simpledebugger/version001/my_test_attach_detach.py=utf-8
