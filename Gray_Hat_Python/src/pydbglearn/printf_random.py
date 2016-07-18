@@ -25,6 +25,8 @@ def printf_randomizer(dbg):
 #     for num in range(r):
 #         parameter_addr = dbg.context.Esp + num - r/2
     #     parameter_addr = dbg.context.SegSs + 0x8
+#     parameter_addr = dbg.read_process_memory(parameter_addr, 4)
+#     parameter_addr = struct.unpack("L", parameter_addr)[0]
     counter = dbg.read_process_memory(parameter_addr, 4)
     #     print 'kernel32.getlasterror(): ', kernel32.GetLastError()
         
@@ -34,7 +36,7 @@ def printf_randomizer(dbg):
     counter = struct.unpack("L", counter)[0]
 #         print 'old Counter: %d' % int(counter)
 #         if counter < 20 and counter > 10:
-    print '(%d,0x%08x' %(counter,parameter_addr)
+    print '(%d,0x%08x)' %(counter,parameter_addr),
     
 #     return DBG_EXCEPTION_NOT_HANDLED
     # Generate a random number and pack it into binary format
