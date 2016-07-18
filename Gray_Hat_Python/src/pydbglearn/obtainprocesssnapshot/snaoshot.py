@@ -6,6 +6,11 @@ Created from 2016-07-18 15:47:53
 @note: 
 @function: 输入: snap, 创建一个进程快照
 输入: restore, 进程恢复到快照状态
+但是, 在process_restore()中提示:
+PDBG_ERR> -- IGNORING ERROR --
+PDBG_ERR> process_restore: [87] WriteProcessMemory(002f0000, ..., 303104):
+参数错误
+可是是什么参数错误?
 '''
 
 # snapshot.py 
@@ -48,37 +53,40 @@ class snapshotter(object):
             if input == 'quit':
                 print '[*] Exiting the snapshotter.'
                 self.running = False
-                self.dbg.terminate_process()
+                print self.dbg.terminate_process()
                 
             elif input == 'snap':
                 print '[*] Suspending all threads.'
-                self.dbg.suspend_all_threads()
+                print self.dbg.suspend_all_threads()
                 
                 print '[*] Obtaining snapshot.'
-                self.dbg.process_snapshot()
-                
-#                 print '[*] self.dbg,resume_all_threads()'
-#                 self.dbg.resume_all_threads()    
+                print self.dbg.process_snapshot()
+                 
+                print '[*] self.dbg,resume_all_threads()'
+                print self.dbg.resume_all_threads()    
                 
             elif input == 'restore':
-#                 print '[*] Suspengding all threads'
-#                 self.dbg.suspend_all_threads()
-#                 
-#                 print '[*] Restoring snapshot'
-#                 self.dbg.process_snapshot()      
+                print '[*] Suspengding all threads'
+                print self.dbg.suspend_all_threads()
+#                  
+                print '[*] Restoring snapshot'
+                print self.dbg.process_restore()      
                 
                 print '[*] Resuming operation.'
-                self.dbg.resume_all_threads()
+                print self.dbg.resume_all_threads()
             
     def start_debugger(self):
         
         self.dbg = pydbg()
         
-        pid = self.dbg.load(self.exe_path)
+#         pid = self.dbg.load(self.exe_path)
+        pid = raw_input("Enter the calc PID: ")
+        self.dbg.attach(int(pid))
         self.pid = self.dbg.pid 
         self.dbg.run()
-exe_path = 'C:\\WINDOWS\\System32\\calc.exe'
-snapshotter(exe_path)
+# exe_path = 'C:\\WINDOWS\\System32\\calc.exe'
+# snapshotter(exe_path)
+snapshotter(None)
                 
         
         

@@ -18,7 +18,7 @@ while 1:
 #     print 'len', msvcrt.strlen(str(str1))
     time.sleep(1)
     counter += 1
-#     if counter > 50:
-#         break
+    if counter > 50:
+        break
     
 msvcrt.printf('end........%d' % counter)    
